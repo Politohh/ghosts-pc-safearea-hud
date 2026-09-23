@@ -1,6 +1,6 @@
 # Ghosts PC Safe Area Fix
 
-Fixes the dark HUD rectangle when Ghosts PC uses a smaller safe area. HUD corners stay at the screen edges; the minimap and ammo stay inset.
+Fixes hard edges on the HUD corners, blood effect, and killcams when Ghosts PC uses a smaller safe area. HUD content stays inset.
 
 ## Install
 
@@ -8,4 +8,4 @@ Copy `safearea_hud` to `<Ghosts folder>/data/ui_scripts/` and restart the game. 
 
 Set `safeArea_adjusted_horizontal` and `safeArea_adjusted_vertical` to `0.85` in your game config.
 
-Tested at 2560×1440 borderless. The fix survived a full game restart. Remove the `safearea_hud` folder to uninstall.
+Tested at 2560×1440 borderless. Remove the `safearea_hud` folder to uninstall.
