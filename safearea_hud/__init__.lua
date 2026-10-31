@@ -1,7 +1,27 @@
 -- Extend full-screen effects to the screen edges; keep HUD content in the safe area.
+-- Works with IW6x / iw6-mod 0.0.5 and older builds.
+
+-- GameX used to return tables here and now returns multiple values. Accept both
+-- so a client update cannot silently disable the whole fix.
+local function getSafeZone()
+    local left, top, right, bottom = GameX.GetAdjustedSafeZoneSize()
+    if type(left) == "table" then
+        left, top, right, bottom = left[1], left[2], left[3], left[4]
+    end
+    return left or 0, top or 0, right or 0, bottom or 0
+end
+
+local function getScreenDims()
+    local width, height = GameX.GetScreenDims()
+    if type(width) == "table" then
+        width, height = width[1], width[2]
+    end
+    return width or 0, height or 0
+end
+
 local function placeAtScreenEdges(corners, material)
-    local safeLeft, safeTop, safeRight, safeBottom = GameX.GetAdjustedSafeZoneSize()
-    local screenWidth, screenHeight = GameX.GetScreenDims()
+    local safeLeft, safeTop, safeRight, safeBottom = getSafeZone()
+    local screenWidth, screenHeight = getScreenDims()
     corners:registerAnimationState("default", {
         topAnchor = false,
         leftAnchor = false,
@@ -20,7 +40,7 @@ local function extendKillcamBar(root)
     local background = root:getFirstDescendentById("killCamBottomBg")
     local bar = root:getFirstDescendentById("killCamBottom")
     if not background or not bar then return end
-    local safeLeft, _, safeRight, safeBottom = GameX.GetAdjustedSafeZoneSize()
+    local safeLeft, _, safeRight, safeBottom = getSafeZone()
     background:registerAnimationState("default", {
         topAnchor = true,
         leftAnchor = true,
@@ -79,14 +99,19 @@ local function wrapCorners(original, childId)
                 end
             end)
             if not ok then
-                print("safearea_hud corner layout error: " .. tostring(err))
+                print("safearea_hud layout error: " .. tostring(err))
             end
         end
         return root
     end
 end
 
-local types = LUI.MenuBuilder.m_types
+local types = LUI.MenuBuilder and LUI.MenuBuilder.m_types
+if not types then
+    print("safearea_hud: MenuBuilder.m_types is unavailable; not installed")
+    return
+end
+
 local meta = getmetatable(types) or {}
 local previousNewIndex = meta.__newindex
 meta.__newindex = function(target, name, constructor)
@@ -105,7 +130,11 @@ meta.__newindex = function(target, name, constructor)
         rawset(target, name, constructor)
     end
 end
-setmetatable(types, meta)
+
+local ok, err = pcall(setmetatable, types, meta)
+if not ok then
+    print("safearea_hud: could not hook MenuBuilder: " .. tostring(err))
+end
 
 if types["fourCornersHudDef"] then
     types["fourCornersHudDef"] = wrapCorners(types["fourCornersHudDef"])
